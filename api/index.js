@@ -1,22 +1,22 @@
-export const config = {
-  runtime: 'edge',
+const http = require('http');
+
+module.exports = (req, res) => {
+    const options = {
+        hostname: 'Faz.jojeyenaz.ir',
+        port: 8040,
+        path: req.url,
+        method: req.method,
+        headers: req.headers
+    };
+
+    const proxy = http.request(options, (targetRes) => {
+        res.writeHead(targetRes.statusCode, targetRes.headers);
+        targetRes.pipe(res);
+    });
+
+    req.pipe(proxy);
+
+    proxy.on('error', (e) => {
+        res.status(500).end();
+    });
 };
-
-export default async function handler(req) {
-  const upstream = 'https://Faz.jojeyenaz.ir:8040';
-  const url = new URL(req.url);
-  const targetUrl = upstream + url.pathname + url.search;
-
-  const newRequest = new Request(targetUrl, {
-    method: req.method,
-    headers: req.headers,
-    body: req.body,
-    redirect: 'follow'
-  });
-
-  try {
-    return await fetch(newRequest);
-  } catch (e) {
-    return new Response('Error: ' + e.message, { status: 500 });
-  }
-}
